@@ -8,7 +8,6 @@ license = { text = "MIT" }
 
 dependencies = [
     "lxml>=5.0",
-    "beautifulsoup4>=4.12",
     "nltk>=3.8",
     "coqui-tts>=0.22",
     "torch>=2.2",

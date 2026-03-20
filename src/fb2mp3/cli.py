@@ -55,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["cuda", "cpu"],
         help="Inference device (default: cuda)",
     )
+    parser.add_argument(
+        "--crossfade",
+        action="store_true",
+        help="Apply a short crossfade between adjacent audio segments to reduce abrupt transitions",
+    )
     return parser
 
 
@@ -106,6 +111,7 @@ def main(argv: list[str] | None = None) -> None:
         voice=args.voice,
         split_chapters=args.split_chapters,
         device=args.device,
+        crossfade=args.crossfade,
     )
 
     Pipeline(config).run()
