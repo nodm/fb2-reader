@@ -1,0 +1,37 @@
+[project]
+name = "fb2mp3"
+version = "0.1.0"
+description = "Convert FB2 eBooks to MP3 audiobooks using XTTS v2"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+dependencies = [
+    "lxml>=5.0",
+    "beautifulsoup4>=4.12",
+    "nltk>=3.8",
+    "coqui-tts>=0.22",
+    "torch>=2.2",
+    "pydub>=0.25",
+]
+
+[project.optional-dependencies]
+rich-cli = [
+    "typer>=0.12",
+]
+
+[project.scripts]
+fb2mp3 = "fb2mp3.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-cov",
+]
