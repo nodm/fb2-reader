@@ -118,7 +118,7 @@ Concatenate all processed segments and export to the final output format.
 ## 5. CLI Interface
 
 ```
-fb2-to-mp3 <input.fb2> [OPTIONS]
+fb2mp3 <input.fb2> [OPTIONS]
 
 Options:
   --lang              Language code: en, uk, ru (required)
@@ -132,12 +132,12 @@ Options:
 
 **Example — built-in speaker:**
 ```
-fb2-to-mp3 book.fb2 --lang uk --speaker "Ana Florence" --output audiobook.mp3
+fb2mp3 book.fb2 --lang uk --speaker "Ana Florence" --output audiobook.mp3
 ```
 
 **Example — custom voice cloning:**
 ```
-fb2-to-mp3 book.fb2 --lang ru --voice narrator.wav --split-chapters
+fb2mp3 book.fb2 --lang ru --voice narrator.wav --split-chapters
 ```
 
 ---
