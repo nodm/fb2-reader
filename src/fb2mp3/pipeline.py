@@ -24,6 +24,7 @@ class PipelineConfig:
     voice: Optional[str]          # path to reference WAV for voice cloning
     split_chapters: bool          # produce one MP3 per chapter
     device: str                   # "cuda" (default) or "cpu"
+    crossfade: bool = False       # apply crossfade between adjacent audio segments
 
 
 class Pipeline:
@@ -62,6 +63,10 @@ class Pipeline:
         chunks = chunker.chunk(book)
         logger.info("Stage 3 complete in %.2fs — %d chunk(s)", time.perf_counter() - t0, len(chunks))
 
+        if not chunks:
+            logger.warning("No text chunks produced — the book may be empty after cleaning. Aborting.")
+            return
+
         # Stage 4 — TTS Engine
         t0 = time.perf_counter()
         tts = TTSEngine(config)
@@ -71,7 +76,15 @@ class Pipeline:
         # Stage 5 — Audio Post-Processor
         t0 = time.perf_counter()
         processor = AudioProcessor()
-        segments = processor.process(segments)
+        apply_crossfade = config.crossfade
+        if config.split_chapters and config.crossfade:
+            logger.warning(
+                "Disabling audio crossfade because split_chapters is enabled; "
+                "crossfade merges all segments into one, which is incompatible "
+                "with per-chapter export. Disable --split-chapters to use --crossfade."
+            )
+            apply_crossfade = False
+        segments = processor.process(segments, apply_crossfade=apply_crossfade)
         logger.info("Stage 5 complete in %.2fs", time.perf_counter() - t0)
 
         # Stage 6 — Audio Exporter

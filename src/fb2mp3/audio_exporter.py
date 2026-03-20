@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import shutil
+from collections import defaultdict
 from typing import Dict, List, Optional
 
 from pydub import AudioSegment
@@ -104,8 +105,6 @@ class AudioExporter:
         os.makedirs(base_dir, exist_ok=True)
 
         # Group (segment, chunk) pairs by chapter index.
-        from collections import defaultdict
-
         chapter_groups: dict[int, list[tuple[AudioSegment, Chunk]]] = defaultdict(list)
         if len(segments) != len(chunks):
             raise ValueError(
