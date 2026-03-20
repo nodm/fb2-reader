@@ -76,7 +76,15 @@ class Pipeline:
         # Stage 5 — Audio Post-Processor
         t0 = time.perf_counter()
         processor = AudioProcessor()
-        segments = processor.process(segments, apply_crossfade=config.crossfade)
+        apply_crossfade = config.crossfade
+        if config.split_chapters and config.crossfade:
+            logger.warning(
+                "Disabling audio crossfade because split_chapters is enabled; "
+                "crossfade merges all segments into one, which is incompatible "
+                "with per-chapter export. Disable --split-chapters to use --crossfade."
+            )
+            apply_crossfade = False
+        segments = processor.process(segments, apply_crossfade=apply_crossfade)
         logger.info("Stage 5 complete in %.2fs", time.perf_counter() - t0)
 
         # Stage 6 — Audio Exporter

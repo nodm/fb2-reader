@@ -1,9 +1,7 @@
 """Tests for fb2mp3.pipeline (orchestrator)."""
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from fb2mp3.models import BookMetadata, Chunk, ParsedBook, TextBlock
 from fb2mp3.pipeline import Pipeline, PipelineConfig
@@ -218,6 +216,25 @@ class TestPipelineRun:
         mocks["processor"].return_value.process.assert_called_once()
         _, kwargs = mocks["processor"].return_value.process.call_args
         assert kwargs.get("apply_crossfade") is True
+
+    def test_crossfade_disabled_when_split_chapters_enabled(self):
+        """crossfade must be forced off when split_chapters is True to avoid length mismatch."""
+        patches, mocks = _patch_stages()
+        config = _make_config(crossfade=True, split_chapters=True)
+
+        with (
+            patches["FB2Parser"],
+            patches["TextCleaner"],
+            patches["Chunker"],
+            patches["TTSEngine"],
+            patches["AudioProcessor"],
+            patches["AudioExporter"],
+        ):
+            Pipeline(config).run()
+
+        mocks["processor"].return_value.process.assert_called_once()
+        _, kwargs = mocks["processor"].return_value.process.call_args
+        assert kwargs.get("apply_crossfade") is False
 
     def test_exporter_receives_metadata_and_config(self):
         parsed_book = _make_parsed_book()
