@@ -38,7 +38,9 @@ fb2-reader/
 │   ├── test_tts_engine.py
 │   ├── test_audio_processor.py
 │   └── test_audio_exporter.py
-├── pyproject.toml               # Project metadata and dependencies
+├── .python-version              # Python version pin (read by uv)
+├── pyproject.toml               # Project metadata, dependencies, tool config
+├── uv.lock                      # Locked dependency tree (committed to git)
 └── README.md
 ```
 
@@ -482,11 +484,30 @@ Validation failures call `parser.error()`, which prints the message and exits wi
 
 ## 12. Dependencies
 
+**Package manager: [`uv`](https://docs.astral.sh/uv/)**
+
+`uv` is the project's package and environment manager. It replaces `pip`, `pip-tools`, `venv`,
+and `pyenv` with a single, fast tool — the closest Python equivalent to `npm` for JS/TS
+developers.
+
+| npm / Node concept | uv equivalent |
+|--------------------|---------------|
+| `package.json`     | `pyproject.toml` |
+| `package-lock.json`| `uv.lock`     |
+| `node_modules/`    | `.venv/` (auto-managed by uv) |
+| `npm install`      | `uv sync`     |
+| `npm install <pkg>`| `uv add <pkg>` |
+| `npm install -D <pkg>` | `uv add --dev <pkg>` |
+| `npx <cmd>`        | `uv run <cmd>` |
+| `.nvmrc`           | `.python-version` |
+
 ### 12.1 `pyproject.toml` (runtime dependencies)
 
 ```toml
 [project]
 name = "fb2mp3"
+version = "0.1.0"
+description = "Convert FB2 eBooks to MP3 audiobooks using XTTS v2"
 requires-python = ">=3.10"
 
 dependencies = [
@@ -499,12 +520,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-    "pytest-cov",
-]
 rich-cli = [
     "typer>=0.12",            # drop-in replacement for argparse with richer output
+]
+
+[project.scripts]
+fb2mp3 = "fb2mp3.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-cov",
 ]
 ```
 
@@ -517,7 +547,77 @@ rich-cli = [
 
 ---
 
-## 13. Error Handling Strategy
+## 13. Developer Workflow
+
+### 13.1 Prerequisites
+
+1. Install `uv` (once, globally):
+   ```bash
+   curl -Lsf https://astral.sh/uv/install.sh | sh
+   ```
+2. Install `ffmpeg` via your OS package manager (required at runtime for MP3 export):
+   ```bash
+   # Ubuntu / Debian
+   sudo apt install ffmpeg
+
+   # macOS
+   brew install ffmpeg
+   ```
+3. Install CUDA 11.8+ and the matching NVIDIA driver if you intend to use GPU inference.
+
+### 13.2 First-Time Setup
+
+```bash
+# Clone the repo and enter the directory
+git clone https://github.com/nodm/fb2-reader.git
+cd fb2-reader
+
+# Create a virtual environment and install all dependencies
+# (reads .python-version, pyproject.toml, and uv.lock)
+uv sync
+```
+
+This is the equivalent of `npm install`. `uv` creates a `.venv/` directory and installs all
+runtime + dev dependencies into it. The lockfile (`uv.lock`) ensures every developer gets the
+exact same package versions.
+
+### 13.3 Common Commands
+
+| Task | Command | npm equivalent |
+|------|---------|----------------|
+| Install / sync all deps | `uv sync` | `npm install` |
+| Add a runtime dep | `uv add pydub` | `npm install pydub` |
+| Add a dev dep | `uv add --dev pytest` | `npm install -D jest` |
+| Remove a dep | `uv remove pydub` | `npm uninstall pydub` |
+| Run the CLI | `uv run fb2mp3 book.fb2 --lang en --speaker "Ana Florence"` | `npx fb2mp3 …` |
+| Run tests | `uv run pytest` | `npm test` |
+| Run tests with coverage | `uv run pytest --cov=fb2mp3` | `npm run test:coverage` |
+| Update lockfile | `uv lock --upgrade` | `npm update` |
+| Show installed packages | `uv pip list` | `npm list` |
+
+### 13.4 Environment Activation (Optional)
+
+`uv run` automatically uses the managed `.venv/`. If you prefer to activate the environment
+manually in your shell (e.g., for IDE integration):
+
+```bash
+# Activate
+source .venv/bin/activate   # Linux / macOS
+.venv\Scripts\activate      # Windows
+
+# Deactivate
+deactivate
+```
+
+### 13.5 Lockfile
+
+`uv.lock` is generated automatically by `uv add` / `uv sync` and **must be committed to git**.
+It serves the same role as `package-lock.json` — it guarantees reproducible installs across
+developer machines and CI environments.
+
+---
+
+## 14. Error Handling Strategy
 
 | Failure Mode | Handling |
 |---|---|
@@ -530,7 +630,7 @@ rich-cli = [
 
 ---
 
-## 14. Testing Strategy
+## 15. Testing Strategy
 
 ### 14.1 Unit Tests
 
@@ -564,7 +664,7 @@ run all stages except Stage 4 (TTS), which is always mocked.
 
 ---
 
-## 15. Configuration & Environment
+## 16. Configuration & Environment
 
 No external configuration files are used. All runtime parameters are passed via CLI arguments
 and propagated through the `PipelineConfig` dataclass.
