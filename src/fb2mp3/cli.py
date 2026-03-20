@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import sys
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -38,7 +37,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output",
         default=None,
-        help="Output path/filename (default: <book_title>.mp3)",
+        help=(
+            "Output path. Without --split-chapters: path/filename for the single MP3 "
+            "(default: <book_title>.mp3). With --split-chapters: path to the output "
+            "directory where per-chapter MP3 files will be written "
+            "(default: <book_title>/)."
+        ),
     )
     parser.add_argument(
         "--split-chapters",
@@ -82,6 +86,14 @@ def main(argv: list[str] | None = None) -> None:
         parser.error(f"Input file not found: {args.input}")
     if not args.input.lower().endswith(".fb2"):
         parser.error(f"Input file must be an .fb2 file: {args.input}")
+
+    # When --split-chapters is set, --output is interpreted as a directory path.
+    # Warn the user if the path looks like a file (i.e. ends with .mp3).
+    if args.split_chapters and args.output and args.output.lower().endswith(".mp3"):
+        parser.error(
+            "--output must be a directory path when --split-chapters is set, "
+            f"but got a .mp3 filename: {args.output!r}"
+        )
 
     # --- Build config and run ---
     from .pipeline import Pipeline, PipelineConfig

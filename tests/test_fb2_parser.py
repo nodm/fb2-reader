@@ -153,6 +153,30 @@ class TestFB2ParserErrors:
         with pytest.raises(ValueError, match="Malformed"):
             FB2Parser().parse(str(path))
 
+    def test_raises_value_error_on_wrong_root_element(self, tmp_path):
+        """Valid XML but not a FictionBook 2 document should raise ValueError."""
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            "<html><body><p>Not an FB2 file</p></body></html>\n"
+        )
+        path = tmp_path / "not_fb2.xml"
+        path.write_text(xml, encoding="utf-8")
+        with pytest.raises(ValueError, match="FictionBook 2"):
+            FB2Parser().parse(str(path))
+
+    def test_raises_value_error_on_wrong_namespace(self, tmp_path):
+        """Valid XML with a FictionBook root but wrong namespace should raise ValueError."""
+        xml = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<FictionBook xmlns="http://example.com/wrong-namespace">\n'
+            "  <body><section><p>text</p></section></body>\n"
+            "</FictionBook>\n"
+        )
+        path = tmp_path / "wrong_ns.fb2"
+        path.write_text(xml, encoding="utf-8")
+        with pytest.raises(ValueError, match="FictionBook 2"):
+            FB2Parser().parse(str(path))
+
     def test_notes_body_skipped(self, tmp_path):
         xml = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'

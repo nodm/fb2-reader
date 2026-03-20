@@ -15,9 +15,6 @@ from .models import Chunk, ParsedBook, TextBlock
 
 logger = logging.getLogger(__name__)
 
-# Download NLTK tokenizer data on first import (quiet = no stdout noise).
-nltk.download("punkt_tab", quiet=True)
-
 # Map pipeline language codes to NLTK language names.
 _LANG_MAP: dict[str, str] = {
     "en": "english",
@@ -32,6 +29,8 @@ class Chunker:
     MAX_CHARS: int = 250
 
     def __init__(self, lang: str) -> None:
+        # Download NLTK tokenizer data on first instantiation (quiet = no stdout noise).
+        nltk.download("punkt_tab", quiet=True)
         nltk_lang = _LANG_MAP.get(lang, "english")
         self._nltk_lang = nltk_lang
         logger.debug("Chunker initialised with NLTK language '%s'", nltk_lang)

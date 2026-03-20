@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import shutil
 from typing import Dict, List, Optional
 
 from pydub import AudioSegment
@@ -106,6 +107,11 @@ class AudioExporter:
         from collections import defaultdict
 
         chapter_groups: dict[int, list[tuple[AudioSegment, Chunk]]] = defaultdict(list)
+        if len(segments) != len(chunks):
+            raise ValueError(
+                "AudioExporter._export_by_chapter received mismatched lengths: "
+                f"{len(segments)=}, {len(chunks)=}"
+            )
         for seg, chunk in zip(segments, chunks):
             chapter_groups[chunk.chapter_index].append((seg, chunk))
 
@@ -154,12 +160,15 @@ class AudioExporter:
     def _export_segment(
         self, segment: AudioSegment, path: str, tags: Dict[str, str]
     ) -> None:
+        if shutil.which("ffmpeg") is None:
+            raise FileNotFoundError(
+                "ffmpeg not found. Please install ffmpeg and ensure it is on PATH."
+            )
         try:
             segment.export(path, format="mp3", bitrate=self.BITRATE, tags=tags)
         except FileNotFoundError as exc:
             raise FileNotFoundError(
-                f"ffmpeg not found. Please install ffmpeg and ensure it is on PATH. "
-                f"Original error: {exc}"
+                f"Export failed: {exc}"
             ) from exc
 
     def _build_id3_tags(self, metadata: BookMetadata) -> Dict[str, str]:

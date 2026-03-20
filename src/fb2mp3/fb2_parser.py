@@ -43,6 +43,11 @@ class FB2Parser:
             raise ValueError(f"Malformed FB2/XML file '{path}': {exc}") from exc
 
         root = tree.getroot()
+        if root.tag != _tag("FictionBook"):
+            raise ValueError(
+                f"'{path}' does not appear to be a FictionBook 2 document "
+                f"(root tag: {root.tag!r})"
+            )
         logger.info("Parsing FB2 file: %s", path)
 
         metadata = self._extract_metadata(root)
